@@ -38,17 +38,21 @@
             width:30%;height:30%;background:#fff;
             border-radius:50%;top:35%;left:35%;
         }
-        /* 文字精准居中 */
+        /* 文字精准居中（核心修正） */
         .text-layer{position:absolute;inset:0;pointer-events:none;}
         .prize-text{
             position:absolute;font-weight:bold;font-size:14px;color:#222;
-            width:60px;text-align:center;transform:translate(-50%, -50%);
+            width:60px;text-align:center;
+            /* 确保文字不跟随旋转，纯居中 */
+            transform: translate(-50%, -50%);
+            -webkit-transform: translate(-50%, -50%);
         }
-        .text-1{top:60px;left:50%;}
-        .text-2{top:120px;left:280px;}
-        .text-3{top:220px;left:50%;}
-        .text-4{top:120px;left:40px;}
-        .text-5{top:60px;left:80px;}
+        /* 每个奖品文字精准坐标（反复校准） */
+        .text-1{top:55px;left:50%;}  /* 一等奖：正上方正中间 */
+        .text-2{top:130px;left:270px;}/* 二等奖：右侧正中间 */
+        .text-3{top:230px;left:50%;} /* 三等奖：正下方正中间 */
+        .text-4{top:130px;left:50px;} /* 四等奖：左侧正中间 */
+        .text-5{top:55px;left:80px;}  /* 谢谢参与：左上方正中间 */
 
         .btn{
             margin-top:30px;padding:14px 40px;
@@ -59,19 +63,23 @@
         .btn:disabled{background:#999;cursor:not-allowed;}
         .result{margin-top:20px;font-size:18px;font-weight:bold;color:#333;}
         
-        /* 管理员控制面板（仅电脑可见） */
+        /* 管理员面板（仅电脑可见） */
         .admin-panel{
             position:fixed;top:10px;right:10px;
             background:#fff;padding:15px;border-radius:10px;
             box-shadow:0 0 10px rgba(0,0,0,0.2);
             display:none;
+            min-width:300px;
         }
         @media(min-width:768px){.admin-panel{display:block;}}
         .admin-panel h3{color:#e53935;margin-bottom:10px;font-size:16px;}
-        .reset-btn{
+        .admin-panel .item{margin:8px 0;display:flex;align-items:center;gap:10px;}
+        .admin-panel input{width:60px;padding:5px;border:1px solid #ddd;border-radius:5px;text-align:center;}
+        .admin-panel button{
             padding:8px 15px;margin:5px 0;background:#2196f3;color:#fff;
             border:none;border-radius:5px;font-size:14px;cursor:pointer;
         }
+        .admin-panel .reset-btn{background:#e53935;}
         .admin-log{
             position:fixed;bottom:10px;right:10px;
             background:rgba(0,0,0,.8);color:#fff;padding:12px;
@@ -99,13 +107,32 @@
 <button id="drawBtn" class="btn">开始抽奖</button>
 <div class="result" id="result"></div>
 
-<!-- 管理员控制面板（仅电脑可见） -->
+<!-- 管理员面板（概率调整+重置，仅电脑可见） -->
 <div class="admin-panel">
-    <h3>🔧 管理员重置</h3>
-    <button class="reset-btn" onclick="resetNum('1')">重置 num=1 链接</button>
-    <button class="reset-btn" onclick="resetNum('2')">重置 num=2 链接</button>
-    <button class="reset-btn" onclick="resetNum('3')">重置 num=3 链接</button>
-    <button class="reset-btn" onclick="clearAllLogs()">清空抽奖记录</button>
+    <h3>🔧 管理员控制面板</h3>
+    <div class="item">
+        <label>一等奖概率(%):</label>
+        <input type="number" id="prob1" value="10" min="0" max="100">
+    </div>
+    <div class="item">
+        <label>二等奖概率(%):</label>
+        <input type="number" id="prob2" value="20" min="0" max="100">
+    </div>
+    <div class="item">
+        <label>三等奖概率(%):</label>
+        <input type="number" id="prob3" value="30" min="0" max="100">
+    </div>
+    <div class="item">
+        <label>四等奖概率(%):</label>
+        <input type="number" id="prob4" value="30" min="0" max="100">
+    </div>
+    <div class="item">
+        <label>谢谢参与概率(%):</label>
+        <input type="number" id="prob5" value="10" min="0" max="100">
+    </div>
+    <button onclick="saveProb()">保存概率设置</button>
+    <button class="reset-btn" onclick="resetLink()">重置 num=1 抽奖链接</button>
+    <button onclick="clearAllLogs()">清空抽奖记录</button>
 </div>
 
 <div class="admin-log">
@@ -115,9 +142,18 @@
 
 <script>
 // ====================== 【核心配置】 ======================
-const ADMIN_KEY = "cdj6688";          // 核心密码（别人不知道）
-const ALLOWED_NUM = ["1","2","3"];    // 允许的抽奖次数码
-const ADMIN_PASSWORD = "admin6688";   // 管理员重置密码（可改）
+const ADMIN_KEY = "cdj6688";          // 核心密码
+const ADMIN_PASSWORD = "admin6688";   // 管理员密码
+// 仅保留num=1有效（符合你“只用一个链接”的需求）
+const ALLOWED_NUM = ["1"];
+// 默认概率（可在面板修改）
+let prizeProb = {
+    1: 10,  // 一等奖
+    2: 20,  // 二等奖
+    3: 30,  // 三等奖
+    4: 30,  // 四等奖
+    5: 10   // 谢谢参与
+};
 // ==========================================================
 
 const prizes = ["一等奖","二等奖","三等奖","四等奖","谢谢参与"];
@@ -128,21 +164,20 @@ const logList = document.getElementById("logList");
 let spinning = false;
 let totalAngle = 0;
 
-// ==================== 1. 链接验证 ====================
+// ==================== 1. 链接验证（仅num=1有效） ====================
 let urlParams = new URLSearchParams(window.location.search);
 let userKey = urlParams.get("key");
 let userNum = urlParams.get("num");
 
-// 密码/次数码无效 → 锁死按钮
-let isLinkValid = (userKey === ADMIN_KEY) && ALLOWED_NUM.includes(userNum);
+// 仅 key=cdj6688 + num=1 有效
+let isLinkValid = (userKey === ADMIN_KEY) && (userNum === "1");
 if (!isLinkValid) {
     drawBtn.disabled = true;
     drawBtn.innerText = "链接无效，请联系发起人";
 }
 
-// ==================== 2. 全局锁（核心！用户抽一次就锁死链接） ====================
-// 全局锁存在公共缓存里，所有用户共用，你重置才会清空
-let globalLockKey = "global_lottery_" + ADMIN_KEY + "_" + userNum;
+// ==================== 2. 全局锁（抽一次就锁死） ====================
+let globalLockKey = "global_lottery_" + ADMIN_KEY + "_1";
 let isLinkLocked = localStorage.getItem(globalLockKey);
 
 if (isLinkLocked) {
@@ -150,7 +185,18 @@ if (isLinkLocked) {
     drawBtn.innerText = "本轮已抽完";
 }
 
-// ==================== 3. 抽奖记录 ====================
+// ==================== 3. 加载概率+抽奖记录 ====================
+// 加载保存的概率
+if (localStorage.getItem("prizeProb")) {
+    prizeProb = JSON.parse(localStorage.getItem("prizeProb"));
+    document.getElementById("prob1").value = prizeProb[1];
+    document.getElementById("prob2").value = prizeProb[2];
+    document.getElementById("prob3").value = prizeProb[3];
+    document.getElementById("prob4").value = prizeProb[4];
+    document.getElementById("prob5").value = prizeProb[5];
+}
+
+// 加载抽奖记录
 function loadLogs() {
     let logs = JSON.parse(localStorage.getItem("lotteryLogs") || "[]");
     logList.innerHTML = "";
@@ -162,7 +208,27 @@ function loadLogs() {
 }
 loadLogs();
 
-// ==================== 4. 抽奖逻辑 ====================
+// ==================== 4. 保存概率设置（核心） ====================
+function saveProb() {
+    let p1 = Number(document.getElementById("prob1").value);
+    let p2 = Number(document.getElementById("prob2").value);
+    let p3 = Number(document.getElementById("prob3").value);
+    let p4 = Number(document.getElementById("prob4").value);
+    let p5 = Number(document.getElementById("prob5").value);
+    
+    // 验证概率总和为100%
+    let total = p1 + p2 + p3 + p4 + p5;
+    if (total !== 100) {
+        alert(`概率总和必须为100%！当前总和：${total}%`);
+        return;
+    }
+    
+    prizeProb = {1:p1, 2:p2, 3:p3, 4:p4, 5:p5};
+    localStorage.setItem("prizeProb", JSON.stringify(prizeProb));
+    alert("概率设置保存成功！");
+}
+
+// ==================== 5. 抽奖逻辑（按自定义概率） ====================
 drawBtn.onclick = function () {
     if (spinning || isLinkLocked || !isLinkValid) return;
     
@@ -171,14 +237,14 @@ drawBtn.onclick = function () {
     drawBtn.innerText = "抽奖中...";
     result.innerText = "";
 
-    // 随机抽奖（可调整概率，比如一等奖概率低）
-    let random = Math.random();
+    // 按自定义概率抽奖
+    let random = Math.random() * 100;
     let idx;
-    if (random < 0.1) idx = 0;    // 一等奖 10%
-    else if (random < 0.3) idx = 1; // 二等奖 20%
-    else if (random < 0.6) idx = 2; // 三等奖 30%
-    else if (random < 0.9) idx = 3; // 四等奖 30%
-    else idx = 4;                 // 谢谢参与 10%
+    if (random < prizeProb[1]) idx = 0;                  // 一等奖
+    else if (random < prizeProb[1]+prizeProb[2]) idx = 1; // 二等奖
+    else if (random < prizeProb[1]+prizeProb[2]+prizeProb[3]) idx = 2; // 三等奖
+    else if (random < prizeProb[1]+prizeProb[2]+prizeProb[3]+prizeProb[4]) idx = 3; // 四等奖
+    else idx = 4;                                       // 谢谢参与
 
     // 转盘旋转
     let circles = 1800 + Math.floor(Math.random() * 1080);
@@ -189,37 +255,35 @@ drawBtn.onclick = function () {
     // 抽奖完成
     setTimeout(() => {
         spinning = false;
-        // 全局锁死这个链接（所有用户都不能再用，除非你重置）
         localStorage.setItem(globalLockKey, "locked");
         isLinkLocked = true;
         
         result.innerText = "🎉 恭喜抽到：" + prizes[idx];
         drawBtn.innerText = "本轮已抽完";
 
-        // 记录抽奖信息（含链接num）
+        // 记录抽奖信息
         let time = new Date().toLocaleString();
         let logs = JSON.parse(localStorage.getItem("lotteryLogs") || "[]");
-        logs.push(`【链接num=${userNum}】${time} → ${prizes[idx]}`);
+        logs.push(`【num=1】${time} → ${prizes[idx]}`);
         localStorage.setItem("lotteryLogs", JSON.stringify(logs));
         loadLogs();
     }, 6000);
 };
 
-// ==================== 5. 管理员重置功能（仅你能操作） ====================
-function resetNum(num) {
+// ==================== 6. 管理员功能 ====================
+// 重置num=1链接
+function resetLink() {
     let pwd = prompt("请输入管理员密码：");
     if (pwd !== ADMIN_PASSWORD) {
         alert("密码错误！");
         return;
     }
-    // 清空该num的全局锁 → 链接恢复可用
-    localStorage.removeItem("global_lottery_" + ADMIN_KEY + "_" + num);
-    alert(`已重置 num=${num} 链接，可重新使用！`);
-    // 刷新页面（可选）
+    localStorage.removeItem(globalLockKey);
+    alert("已重置num=1链接，可重新使用！");
     location.reload();
 }
 
-// 清空所有抽奖记录
+// 清空抽奖记录
 function clearAllLogs() {
     let pwd = prompt("请输入管理员密码：");
     if (pwd !== ADMIN_PASSWORD) {
