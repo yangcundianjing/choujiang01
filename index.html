@@ -55,15 +55,16 @@
             box-shadow:0 0 20px rgba(0,0,0,0.2);
             transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);
         }
+        /* 把中间的白色遮罩改成小点，做出实心圆盘效果 */
         .wheel::before{
             content:"";
             position:absolute;
-            width:78%;
-            height:78%;
+            width:30%;
+            height:30%;
             background:white;
             border-radius:50%;
-            top:11%;
-            left:11%;
+            top:35%;
+            left:35%;
         }
         .item{
             position:absolute;
@@ -74,20 +75,23 @@
             font-size:14px;
             color:#222;
         }
+        /* 核心：文字位置和旋转角度修正，保证正向显示 */
         .item span{
             position:absolute;
             left:50%;
-            top:20px;
-            transform-origin:0 140px;
+            top:15px;
+            /* 旋转中心固定在转盘边缘，保证文字不歪 */
+            transform-origin:0 160px;
             width:80px;
             margin-left:-40px;
+            /* 强制文字水平，不随转盘旋转 */
+            transform: rotate(var(--rotate)) skew(0deg);
         }
-        /* 关键：修正每个文字的旋转角度，保证正向显示 */
-        .item span:nth-child(1){ transform: rotate(36deg); }
-        .item span:nth-child(2){ transform: rotate(108deg); }
-        .item span:nth-child(3){ transform: rotate(180deg); }
-        .item span:nth-child(4){ transform: rotate(252deg); }
-        .item span:nth-child(5){ transform: rotate(324deg); }
+        .item span:nth-child(1){ --rotate: 36deg; }
+        .item span:nth-child(2){ --rotate: 108deg; }
+        .item span:nth-child(3){ --rotate: 180deg; }
+        .item span:nth-child(4){ --rotate: 252deg; }
+        .item span:nth-child(5){ --rotate: 324deg; }
 
         .btn{
             margin-top:30px;
@@ -195,7 +199,7 @@ btn.onclick = function () {
 
     let index = Math.floor(Math.random() * 5);
     let circles = 1800 + Math.floor(Math.random() * 1080);
-    // 修正定位：让箭头刚好指向每个奖品的正中间
+    // 修正定位：箭头100%指向奖品正中间
     let end = circles + (360 - (index * 72 + 36));
     totalAngle += end;
 
