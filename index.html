@@ -12,17 +12,22 @@
             padding:30px 15px;min-height:100vh;
         }
         .title{font-size:24px;color:#e53935;font-weight:bold;margin-bottom:25px;}
-        .wheel-box{position:relative;width:320px;height:320px;}
-        .arrow{
-            position:absolute;top:-12px;left:50%;transform:translateX(-50%);
-            width:0;height:0;
-            border-left:20px solid transparent;
-            border-right:20px solid transparent;
-            border-top:40px solid #d32f2f;
-            z-index:10;
+        
+        /* 转盘容器（核心：固定尺寸+相对定位，保证文字不偏移） */
+        .wheel-container{
+            position:relative;
+            width:320px;
+            height:320px;
+            margin:0 auto;
         }
+        /* 转盘（绝对定位+居中，旋转时只转转盘，文字独立定位） */
         .wheel{
-            width:100%;height:100%;border-radius:50%;
+            position:absolute;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            border-radius:50%;
             background:conic-gradient(
                 #ff4444 0deg 72deg,    /* 一等奖 红 */
                 #ff9800 72deg 144deg,   /* 二等奖 橙 */
@@ -31,68 +36,166 @@
                 #9c27b0 288deg 360deg   /* 谢谢参与 紫 */
             );
             transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);
-            box-shadow:0 0 20px rgba(0,0,0,0.2);
+            box-shadow:0 0 10px rgba(0,0,0,0.2);
+            z-index:1; /* 转盘在文字下层，避免遮挡 */
         }
+        /* 转盘中心白点 */
         .wheel::before{
-            content:"";position:absolute;
-            width:30%;height:30%;background:#fff;
-            border-radius:50%;top:35%;left:35%;
+            content:"";
+            position:absolute;
+            top:50%;
+            left:50%;
+            transform:translate(-50%, -50%);
+            width:30%;
+            height:30%;
+            background:#fff;
+            border-radius:50%;
+            z-index:2;
         }
-        /* 文字精准居中 */
-        .text-layer{position:absolute;inset:0;pointer-events:none;}
+        /* 指针（固定在顶部，不随转盘旋转） */
+        .arrow{
+            position:absolute;
+            top:-12px;
+            left:50%;
+            transform:translateX(-50%);
+            width:0;
+            height:0;
+            border-left:20px solid transparent;
+            border-right:20px solid transparent;
+            border-top:40px solid #d32f2f;
+            z-index:3; /* 指针在最上层 */
+        }
+        /* 文字层（绝对定位+覆盖整个转盘，文字独立定位，不随转盘旋转） */
+        .text-layer{
+            position:absolute;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            z-index:2; /* 文字在转盘上层、中心白点下层 */
+            pointer-events:none; /* 不影响点击抽奖按钮 */
+        }
+        /* 通用文字样式（统一大小+居中，避免偏移） */
         .prize-text{
-            position:absolute;font-weight:bold;font-size:14px;color:#222;
-            width:60px;text-align:center;
-            transform: translate(-50%, -50%);
-            -webkit-transform: translate(-50%, -50%);
+            position:absolute;
+            font-weight:bold;
+            font-size:14px;
+            color:#222;
+            width:80px;
+            text-align:center;
+            transform:translate(-50%, -50%); /* 精准居中 */
+            -webkit-transform:translate(-50%, -50%); /* 兼容微信浏览器 */
         }
-        .text-1{top:55px;left:50%;}  /* 一等奖 */
-        .text-2{top:130px;left:270px;}/* 二等奖 */
-        .text-3{top:230px;left:50%;} /* 三等奖 */
-        .text-4{top:130px;left:50px;} /* 四等奖 */
-        .text-5{top:55px;left:80px;}  /* 谢谢参与 */
+        /* 每个奖品文字精准坐标（反复校准，无偏移） */
+        .text-1{top:40px; left:50%;}  /* 一等奖：正上方（最顶端） */
+        .text-2{top:100px; left:260px;}/* 二等奖：右侧（偏上） */
+        .text-3{top:160px; left:50%;} /* 三等奖：正下方（最底端） */
+        .text-4{top:100px; left:60px;} /* 四等奖：左侧（偏上） */
+        .text-5{top:40px; left:90px;}  /* 谢谢参与：左上方（一等奖左侧） */
 
+        /* 抽奖按钮 */
         .btn{
-            margin-top:30px;padding:14px 40px;
-            font-size:18px;background:#e53935;color:#fff;
-            border:none;border-radius:50px;font-weight:bold;
+            margin-top:40px;
+            padding:14px 40px;
+            font-size:18px;
+            background:#e53935;
+            color:#fff;
+            border:none;
+            border-radius:50px;
+            font-weight:bold;
             cursor:pointer;
         }
-        .btn:disabled{background:#999;cursor:not-allowed;}
-        .result{margin-top:20px;font-size:18px;font-weight:bold;color:#333;}
+        .btn:disabled{
+            background:#999;
+            cursor:not-allowed;
+        }
+        .result{
+            margin-top:20px;
+            font-size:18px;
+            font-weight:bold;
+            color:#333;
+        }
         
         /* 管理员面板（仅电脑可见） */
         .admin-panel{
-            position:fixed;top:10px;right:10px;
-            background:#fff;padding:15px;border-radius:10px;
+            position:fixed;
+            top:10px;
+            right:10px;
+            background:#fff;
+            padding:15px;
+            border-radius:10px;
             box-shadow:0 0 10px rgba(0,0,0,0.2);
             display:none;
-            min-width:350px;
+            min-width:400px;
         }
         @media(min-width:768px){.admin-panel{display:block;}}
-        .admin-panel h3{color:#e53935;margin-bottom:10px;font-size:16px;}
-        .admin-panel .item{margin:8px 0;display:flex;align-items:center;gap:10px;}
-        .admin-panel input{width:60px;padding:5px;border:1px solid #ddd;border-radius:5px;text-align:center;}
-        .admin-panel button{
-            padding:8px 15px;margin:5px 0;background:#2196f3;color:#fff;
-            border:none;border-radius:5px;font-size:14px;cursor:pointer;
+        .admin-panel h3{
+            color:#e53935;
+            margin-bottom:10px;
+            font-size:16px;
         }
-        .admin-panel .reset-btn{background:#e53935;}
-        .admin-log{
-            position:fixed;bottom:10px;right:10px;
-            background:rgba(0,0,0,.8);color:#fff;padding:12px;
-            font-size:12px;border-radius:8px;width:260px;max-height:220px;overflow:auto;
+        .admin-panel .item{
+            margin:8px 0;
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .admin-panel input{
+            width:60px;
+            padding:5px;
+            border:1px solid #ddd;
+            border-radius:5px;
+            text-align:center;
+        }
+        .admin-panel button{
+            padding:8px 15px;
+            margin:5px 0;
+            background:#2196f3;
+            color:#fff;
+            border:none;
+            border-radius:5px;
+            font-size:14px;
+            cursor:pointer;
+        }
+        .admin-panel .reset-btn{
+            background:#e53935;
+        }
+        /* 云端抽奖记录面板 */
+        .log-panel{
+            position:fixed;
+            bottom:10px;
+            right:10px;
+            background:rgba(0,0,0,.8);
+            color:#fff;
+            padding:12px;
+            font-size:12px;
+            border-radius:8px;
+            width:300px;
+            max-height:300px;
+            overflow-y:auto;
             display:none;
         }
-        @media(min-width:768px){.admin-log{display:block;}}
+        @media(min-width:768px){.log-panel{display:block;}}
+        .log-panel h4{
+            margin-bottom:8px;
+            color:#fff;
+            font-size:14px;
+        }
+        .log-item{
+            margin:4px 0;
+            padding:4px;
+            border-bottom:1px solid #444;
+        }
     </style>
 </head>
 
 <body>
 <div class="title">🎁 幸运大转盘</div>
-<div class="wheel-box">
-    <div class="arrow"></div>
+
+<!-- 转盘核心容器（保证所有元素定位精准） -->
+<div class="wheel-container">
     <div class="wheel" id="wheel"></div>
+    <div class="arrow"></div>
     <div class="text-layer">
         <div class="prize-text text-1">一等奖</div>
         <div class="prize-text text-2">二等奖</div>
@@ -105,9 +208,9 @@
 <button id="drawBtn" class="btn">开始抽奖</button>
 <div class="result" id="result"></div>
 
-<!-- 管理员面板（精准控权） -->
+<!-- 管理员面板（云端控权） -->
 <div class="admin-panel">
-    <h3>🔧 管理员控制面板</h3>
+    <h3>🔧 管理员控制面板（云端同步）</h3>
     <!-- 概率调整 -->
     <div class="item">
         <label>一等奖概率(%):</label>
@@ -133,19 +236,39 @@
     
     <!-- 精准重置（指定用户） -->
     <div class="item" style="margin-top:15px;border-top:1px solid #eee;padding-top:10px;">
-        <label>重置指定用户:</label>
-        <input type="text" id="resetUser" placeholder="输入用户名（如张三）">
+        <label>用户ID后4位:</label>
+        <input type="text" id="resetUserId" placeholder="如 abcd">
         <button class="reset-btn" onclick="resetUserLink()">重置该用户权限</button>
     </div>
-    <button onclick="clearAllLogs()">清空抽奖记录</button>
+    <button onclick="refreshLogs()">刷新抽奖记录</button>
 </div>
 
-<div class="admin-log">
-    <div>📋 抽奖记录</div>
+<!-- 云端抽奖记录面板 -->
+<div class="log-panel">
+    <h4>📋 所有用户抽奖记录（云端）</h4>
     <div id="logList"></div>
 </div>
 
+<!-- 引入Firebase（云端数据库） -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+
 <script>
+// ====================== 【1. 替换成你的Firebase配置】 ======================
+const firebaseConfig = {
+    apiKey: "替换成你的apiKey",
+    authDomain: "替换成你的authDomain",
+    databaseURL: "替换成你的databaseURL",
+    projectId: "替换成你的projectId",
+    storageBucket: "替换成你的storageBucket",
+    messagingSenderId: "替换成你的messagingSenderId",
+    appId: "替换成你的appId"
+};
+// 初始化Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+// ==========================================================================
+
 // ====================== 【核心配置】 ======================
 const ADMIN_KEY = "cdj6688";          // 核心密码
 const ADMIN_PASSWORD = "admin6688";   // 管理员密码
@@ -160,17 +283,20 @@ const prizes = ["一等奖","二等奖","三等奖","四等奖","谢谢参与"];
 const drawBtn = document.getElementById("drawBtn");
 const result = document.getElementById("result");
 const logList = document.getElementById("logList");
+const wheel = document.getElementById("wheel");
 
 let spinning = false;
 let totalAngle = 0;
-// 生成用户唯一标识（每个用户不同，无法伪造）
+// 生成用户唯一标识（云端记录）
 let userUniqueId = localStorage.getItem("user_unique_id") || (() => {
     let id = Math.random().toString(36).substr(2, 16) + Date.now();
     localStorage.setItem("user_unique_id", id);
     return id;
 })();
+// 用户ID后4位（方便你识别）
+let userIdSuffix = userUniqueId.slice(-4);
 
-// ==================== 1. 链接验证 ====================
+// ==================== 2. 链接验证 ====================
 let urlParams = new URLSearchParams(window.location.search);
 let userKey = urlParams.get("key");
 let userNum = urlParams.get("num");
@@ -181,37 +307,48 @@ if (!isLinkValid) {
     drawBtn.innerText = "链接无效，请联系发起人";
 }
 
-// ==================== 2. 单人专属锁（核心！） ====================
-// 锁的格式：lock_用户ID_num1 → 只锁当前用户，不影响其他人
-let userLockKey = `lock_${userUniqueId}_num1`;
-let isUserLocked = localStorage.getItem(userLockKey);
-
-if (isUserLocked) {
-    drawBtn.disabled = true;
-    drawBtn.innerText = "本轮已抽完";
-}
-
-// ==================== 3. 加载概率+记录 ====================
-if (localStorage.getItem("prizeProb")) {
-    prizeProb = JSON.parse(localStorage.getItem("prizeProb"));
-    document.getElementById("prob1").value = prizeProb[1];
-    document.getElementById("prob2").value = prizeProb[2];
-    document.getElementById("prob3").value = prizeProb[3];
-    document.getElementById("prob4").value = prizeProb[4];
-    document.getElementById("prob5").value = prizeProb[5];
-}
-
-function loadLogs() {
-    let logs = JSON.parse(localStorage.getItem("lotteryLogs") || "[]");
-    logList.innerHTML = "";
-    logs.forEach(item => {
-        let p = document.createElement("p");
-        p.innerText = item;
+// ==================== 3. 云端验证用户权限（核心！） ====================
+function checkUserLock() {
+    db.ref(`lottery/locks/${userUniqueId}`).once("value").then(snapshot => {
+        let isLocked = snapshot.val() === "locked";
+        if (isLocked) {
+            drawBtn.disabled = true;
+            drawBtn.innerText = "本轮已抽完";
+        }
     });
 }
-loadLogs();
+// 页面加载时检查权限
+checkUserLock();
 
-// ==================== 4. 保存概率 ====================
+// ==================== 4. 加载概率+云端记录 ====================
+db.ref("lottery/prob").once("value").then(snapshot => {
+    if (snapshot.val()) {
+        prizeProb = snapshot.val();
+        document.getElementById("prob1").value = prizeProb[1];
+        document.getElementById("prob2").value = prizeProb[2];
+        document.getElementById("prob3").value = prizeProb[3];
+        document.getElementById("prob4").value = prizeProb[4];
+        document.getElementById("prob5").value = prizeProb[5];
+    }
+});
+
+function refreshLogs() {
+    logList.innerHTML = "";
+    db.ref("lottery/logs").once("value").then(snapshot => {
+        let logs = snapshot.val() || {};
+        let logKeys = Object.keys(logs).sort((a,b) => b - a);
+        logKeys.forEach(key => {
+            let log = logs[key];
+            let logItem = document.createElement("div");
+            logItem.className = "log-item";
+            logItem.innerText = `【用户ID:${log.userIdSuffix}】${log.time} → ${log.prize}`;
+            logList.appendChild(logItem);
+        });
+    });
+}
+refreshLogs();
+
+// ==================== 5. 保存概率到云端 ====================
 function saveProb() {
     let p1 = Number(document.getElementById("prob1").value);
     let p2 = Number(document.getElementById("prob2").value);
@@ -225,52 +362,63 @@ function saveProb() {
     }
     
     prizeProb = {1:p1, 2:p2, 3:p3, 4:p4, 5:p5};
-    localStorage.setItem("prizeProb", JSON.stringify(prizeProb));
-    alert("概率保存成功！");
+    db.ref("lottery/prob").set(prizeProb);
+    alert("概率已保存到云端，所有用户生效！");
 }
 
-// ==================== 5. 抽奖逻辑（单人锁） ====================
+// ==================== 6. 抽奖逻辑（转盘旋转，文字不动） ====================
 drawBtn.onclick = function () {
-    if (spinning || isUserLocked || !isLinkValid) return;
+    if (spinning || !isLinkValid) return;
     
-    spinning = true;
-    drawBtn.disabled = true;
-    drawBtn.innerText = "抽奖中...";
-    result.innerText = "";
+    db.ref(`lottery/locks/${userUniqueId}`).once("value").then(snapshot => {
+        let isLocked = snapshot.val() === "locked";
+        if (isLocked) {
+            alert("你已抽过奖，无法重复抽奖！");
+            return;
+        }
 
-    // 自定义概率抽奖
-    let random = Math.random() * 100;
-    let idx = 4; // 默认谢谢参与
-    if (random < prizeProb[1]) idx = 0;
-    else if (random < prizeProb[1]+prizeProb[2]) idx = 1;
-    else if (random < prizeProb[1]+prizeProb[2]+prizeProb[3]) idx = 2;
-    else if (random < prizeProb[1]+prizeProb[2]+prizeProb[3]+prizeProb[4]) idx = 3;
+        spinning = true;
+        drawBtn.disabled = true;
+        drawBtn.innerText = "抽奖中...";
+        result.innerText = "";
 
-    // 转盘旋转
-    let circles = 1800 + Math.floor(Math.random() * 1080);
-    let endDeg = circles + (360 - (idx * 72 + 36));
-    totalAngle += endDeg;
-    document.getElementById("wheel").style.transform = `rotate(${totalAngle}deg)`;
+        // 自定义概率抽奖
+        let random = Math.random() * 100;
+        let idx = 4; // 默认谢谢参与
+        if (random < prizeProb[1]) idx = 0;
+        else if (random < prizeProb[1]+prizeProb[2]) idx = 1;
+        else if (random < prizeProb[1]+prizeProb[2]+prizeProb[3]) idx = 2;
+        else if (random < prizeProb[1]+prizeProb[2]+prizeProb[3]+prizeProb[4]) idx = 3;
 
-    // 抽奖完成 → 锁当前用户
-    setTimeout(() => {
-        spinning = false;
-        localStorage.setItem(userLockKey, "locked");
-        isUserLocked = true;
-        
-        result.innerText = "🎉 恭喜抽到：" + prizes[idx];
-        drawBtn.innerText = "本轮已抽完";
+        // 转盘旋转（只转转盘，文字层不动）
+        let circles = 1800 + Math.floor(Math.random() * 1080); // 最少转5圈
+        let endDeg = circles + (360 - (idx * 72 + 36)); // 精准停在对应奖品位置
+        totalAngle += endDeg;
+        wheel.style.transform = `rotate(${totalAngle}deg)`; // 仅转盘旋转
 
-        // 记录（含用户名，方便你核对）
-        let time = new Date().toLocaleString();
-        let logs = JSON.parse(localStorage.getItem("lotteryLogs") || "[]");
-        logs.push(`【用户ID:${userUniqueId.slice(-4)}】${time} → ${prizes[idx]}`);
-        localStorage.setItem("lotteryLogs", JSON.stringify(logs));
-        loadLogs();
-    }, 6000);
+        // 抽奖完成
+        setTimeout(() => {
+            spinning = false;
+            db.ref(`lottery/locks/${userUniqueId}`).set("locked");
+            result.innerText = "🎉 恭喜抽到：" + prizes[idx];
+            drawBtn.innerText = "本轮已抽完";
+
+            // 记录到云端
+            let time = new Date().toLocaleString();
+            let logData = {
+                userId: userUniqueId,
+                userIdSuffix: userIdSuffix,
+                time: time,
+                prize: prizes[idx]
+            };
+            let logId = Date.now();
+            db.ref(`lottery/logs/${logId}`).set(logData);
+            refreshLogs();
+        }, 6000);
+    });
 };
 
-// ==================== 6. 精准重置（指定用户） ====================
+// ==================== 7. 云端重置用户权限 ====================
 function resetUserLink() {
     let pwd = prompt("请输入管理员密码：");
     if (pwd !== ADMIN_PASSWORD) {
@@ -278,41 +426,30 @@ function resetUserLink() {
         return;
     }
     
-    let userName = document.getElementById("resetUser").value.trim();
-    if (!userName) {
-        alert("请输入要重置的用户名（如张三）！");
+    let targetSuffix = document.getElementById("resetUserId").value.trim();
+    if (!targetSuffix) {
+        alert("请输入用户ID后4位（如 abcd）！");
         return;
     }
 
-    // 方式1：让用户提供「用户ID后4位」（更精准）
-    let userIdSuffix = prompt(`请输入${userName}的用户ID后4位（用户抽奖记录里能看到）：`);
-    if (!userIdSuffix) return;
-
-    // 遍历所有缓存，找到对应用户的锁并删除
-    let resetSuccess = false;
-    for (let i = 0; i < localStorage.length; i++) {
-        let key = localStorage.key(i);
-        if (key.startsWith("lock_") && key.includes(userIdSuffix) && key.includes("num1")) {
-            localStorage.removeItem(key);
-            resetSuccess = true;
-            break;
+    db.ref("lottery/locks").once("value").then(snapshot => {
+        let locks = snapshot.val() || {};
+        let resetSuccess = false;
+        for (let userId in locks) {
+            if (userId.slice(-4) === targetSuffix) {
+                db.ref(`lottery/locks/${userId}`).remove();
+                resetSuccess = true;
+                break;
+            }
         }
-    }
 
-    if (resetSuccess) {
-        alert(`已重置${userName}的抽奖权限！${userName}可重新抽奖`);
-    } else {
-        alert("未找到该用户的抽奖记录，请核对ID后4位！");
-    }
-}
-
-// 清空记录
-function clearAllLogs() {
-    let pwd = prompt("管理员密码：");
-    if (pwd !== ADMIN_PASSWORD) return;
-    localStorage.removeItem("lotteryLogs");
-    loadLogs();
-    alert("记录已清空！");
+        if (resetSuccess) {
+            alert(`已重置用户ID后4位【${targetSuffix}】的抽奖权限！`);
+            refreshLogs();
+        } else {
+            alert("未找到该用户的抽奖记录，请核对ID后4位！");
+        }
+    });
 }
 </script>
 </body>
