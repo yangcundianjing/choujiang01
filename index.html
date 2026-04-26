@@ -3,48 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>幸运大转盘抽奖</title>
+    <title>幸运大转盘</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, sans-serif;}
         body{
             background:#fff5f5;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            padding:30px 15px;
-            min-height:100vh;
+            display:flex;flex-direction:column;align-items:center;
+            padding:30px 15px;min-height:100vh;
         }
-        .title{
-            font-size:26px;
-            color:#e53935;
-            font-weight:bold;
-            margin-bottom:25px;
-            display:flex;
-            align-items:center;
-            gap:8px;
-        }
-        .wheel-box{
-            position:relative;
-            width:320px;
-            height:320px;
-        }
+        .title{font-size:24px;color:#e53935;font-weight:bold;margin-bottom:25px;}
+        .wheel-box{position:relative;width:320px;height:320px;}
         .arrow{
-            position:absolute;
-            top:-12px;
-            left:50%;
-            transform:translateX(-50%);
-            width:0;
-            height:0;
+            position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+            width:0;height:0;
             border-left:20px solid transparent;
             border-right:20px solid transparent;
             border-top:40px solid #d32f2f;
             z-index:10;
         }
         .wheel{
-            width:100%;
-            height:100%;
-            border-radius:50%;
-            position:relative;
+            width:100%;height:100%;border-radius:50%;
             background:conic-gradient(
                 #ff4444 0deg 72deg,
                 #ff9800 72deg 144deg,
@@ -52,171 +30,137 @@
                 #2196f3 216deg 288deg,
                 #9c27b0 288deg 360deg
             );
-            box-shadow:0 0 20px rgba(0,0,0,0.2);
             transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);
+            box-shadow:0 0 20px rgba(0,0,0,0.2);
         }
-        /* 把中间的白色遮罩改成小点，做出实心圆盘效果 */
         .wheel::before{
-            content:"";
-            position:absolute;
-            width:30%;
-            height:30%;
-            background:white;
-            border-radius:50%;
-            top:35%;
-            left:35%;
+            content:"";position:absolute;
+            width:30%;height:30%;background:#fff;
+            border-radius:50%;top:35%;left:35%;
         }
-        .item{
-            position:absolute;
-            width:100%;
-            height:100%;
-            text-align:center;
-            font-weight:bold;
-            font-size:14px;
-            color:#222;
+        .text-layer{
+            position:absolute;inset:0;pointer-events:none;
         }
-        /* 核心：文字位置和旋转角度修正，保证正向显示 */
-        .item span{
-            position:absolute;
-            left:50%;
-            top:15px;
-            /* 旋转中心固定在转盘边缘，保证文字不歪 */
-            transform-origin:0 160px;
-            width:80px;
-            margin-left:-40px;
-            /* 强制文字水平，不随转盘旋转 */
-            transform: rotate(var(--rotate)) skew(0deg);
+        .text-layer span{
+            position:absolute;width:80px;text-align:center;
+            font-weight:bold;font-size:14px;color:#222;
         }
-        .item span:nth-child(1){ --rotate: 36deg; }
-        .item span:nth-child(2){ --rotate: 108deg; }
-        .item span:nth-child(3){ --rotate: 180deg; }
-        .item span:nth-child(4){ --rotate: 252deg; }
-        .item span:nth-child(5){ --rotate: 324deg; }
+        .t1{top:35px;left:50%;transform:translateX(-50%);}
+        .t2{top:50%;right:20px;transform:translateY(-50%);}
+        .t3{bottom:35px;left:50%;transform:translateX(-50%);}
+        .t4{top:50%;left:20px;transform:translateY(-50%);}
+        .t5{top:25px;left:25%;transform:translateX(-50%);}
 
         .btn{
-            margin-top:30px;
-            padding:14px 40px;
-            font-size:18px;
-            background:#e53935;
-            color:white;
-            border:none;
-            border-radius:50px;
-            font-weight:bold;
+            margin-top:30px;padding:14px 40px;
+            font-size:18px;background:#e53935;color:#fff;
+            border:none;border-radius:50px;font-weight:bold;
         }
         .btn:disabled{background:#999;}
-        .result{
-            margin-top:20px;
-            font-size:18px;
-            color:#333;
-            font-weight:bold;
-        }
-        .log-panel{
-            position:fixed;
-            bottom:10px;
-            right:10px;
-            background:rgba(0,0,0,0.8);
-            color:white;
-            padding:12px;
-            font-size:12px;
-            border-radius:8px;
-            width:260px;
-            max-height:200px;
-            overflow:auto;
+        .result{margin-top:20px;font-size:18px;font-weight:bold;color:#333;}
+        .admin-log{
+            position:fixed;bottom:10px;right:10px;
+            background:rgba(0,0,0,.8);color:#fff;padding:12px;
+            font-size:12px;border-radius:8px;width:260px;max-height:220px;overflow:auto;
             display:none;
         }
-        @media(min-width:768px){.log-panel{display:block;}}
+        @media(min-width:768px){.admin-log{display:block;}}
     </style>
 </head>
-<body>
 
-<div class="title">
-    <span>🎁</span>
-    幸运大转盘抽奖
-</div>
+<body>
+<div class="title">🎁 幸运大转盘</div>
 <div class="wheel-box">
     <div class="arrow"></div>
-    <div class="wheel" id="wheel">
-        <div class="item">
-            <span>一等奖</span>
-            <span>二等奖</span>
-            <span>三等奖</span>
-            <span>四等奖</span>
-            <span>谢谢参与</span>
-        </div>
+    <div class="wheel" id="wheel"></div>
+    <div class="text-layer">
+        <span class="t1">一等奖</span>
+        <span class="t2">二等奖</span>
+        <span class="t3">三等奖</span>
+        <span class="t4">四等奖</span>
+        <span class="t5">谢谢参与</span>
     </div>
 </div>
 
 <button id="btn" class="btn">开始抽奖</button>
 <div class="result" id="result"></div>
 
-<div class="log-panel">
+<div class="admin-log">
     <div>📋 抽奖记录</div>
-    <div id="log"></div>
+    <div id="logList"></div>
 </div>
 
 <script>
-// ====================== 【可修改奖品】 ======================
-const prizes = ["一等奖","二等奖","三等奖","四等奖","谢谢参与"];
+// ====================== 【管理员密码】 ======================
+// 核心密码，别人不知道，改不了
+const ADMIN_KEY = "cdj6688";
 // ============================================================
 
+const prizes = ["一等奖","二等奖","三等奖","四等奖","谢谢参与"];
 const wheel = document.getElementById("wheel");
 const btn = document.getElementById("btn");
 const result = document.getElementById("result");
-const log = document.getElementById("log");
+const logList = document.getElementById("logList");
 
 let spinning = false;
 let totalAngle = 0;
 
-// 每次发新链接 = 新抽奖机会（核心功能！）
-let url = new URL(location.href);
-let key = "lottery_" + url.search;
-let canDraw = !localStorage.getItem(key);
+// ==================== 核心防刷+多次抽奖逻辑 ====================
+let urlParams = new URLSearchParams(window.location.search);
+let userKey = urlParams.get("key"); // 核心密码
+let userNum = urlParams.get("num"); // 消费次数码
 
-if (!canDraw) {
+// 1. 密码不对 → 链接无效
+if (userKey !== ADMIN_KEY || !userNum) {
     btn.disabled = true;
-    btn.innerText = "本轮已抽过";
+    btn.innerText = "链接无效，请联系发起人";
 }
 
-// 日志
-let logs = JSON.parse(localStorage.getItem("logs") || "[]");
-function showLog() {
-    log.innerHTML = "";
-    logs.forEach(t => {
+// 2. 密码对 + 有次数码 → 验证是否抽过
+let storageKey = "lottery_" + ADMIN_KEY + "_" + userNum;
+let alreadyDraw = localStorage.getItem(storageKey);
+if (alreadyDraw) {
+    btn.disabled = true;
+    btn.innerText = "本轮已抽完";
+}
+
+// ===================== 日志 =====================
+let logs = JSON.parse(localStorage.getItem("lotteryLogs") || "[]");
+function showLogs() {
+    logList.innerHTML = "";
+    logs.forEach(item => {
         let p = document.createElement("p");
-        p.innerText = t;
-        log.appendChild(p);
+        p.innerText = item;
+        logList.appendChild(p);
     });
 }
-showLog();
+showLogs();
 
-// 抽奖
+// ===================== 抽奖 =====================
 btn.onclick = function () {
-    if (spinning || !canDraw) return;
+    if (spinning || alreadyDraw || userKey !== ADMIN_KEY || !userNum) return;
     spinning = true;
     btn.disabled = true;
     btn.innerText = "抽奖中...";
     result.innerText = "";
 
-    let index = Math.floor(Math.random() * 5);
+    let idx = Math.floor(Math.random() * 5);
     let circles = 1800 + Math.floor(Math.random() * 1080);
-    // 修正定位：箭头100%指向奖品正中间
-    let end = circles + (360 - (index * 72 + 36));
-    totalAngle += end;
-
+    let endDeg = circles + (360 - (idx * 72 + 36));
+    totalAngle += endDeg;
     wheel.style.transform = `rotate(${totalAngle}deg)`;
 
     setTimeout(() => {
         spinning = false;
-        result.innerText = "🎉 恭喜你抽到：" + prizes[index];
-        btn.innerText = "本轮已抽过";
-
-        localStorage.setItem(key, "true");
-        canDraw = false;
+        alreadyDraw = true;
+        result.innerText = "🎉 恭喜抽到：" + prizes[idx];
+        btn.innerText = "本轮已抽完";
+        localStorage.setItem(storageKey, "1");
 
         let time = new Date().toLocaleString();
-        logs.push(time + " → " + prizes[index]);
-        localStorage.setItem("logs", JSON.stringify(logs));
-        showLog();
+        logs.push(`【次数${userNum}】${time} → ${prizes[idx]}`);
+        localStorage.setItem("lotteryLogs", JSON.stringify(logs));
+        showLogs();
     }, 6000);
 };
 </script>
