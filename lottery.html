@@ -33,11 +33,11 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   height:100%;
   border-radius:50%;
   background:conic-gradient(
-    #9c27b0 0deg 72deg,  /* 0:谢谢参与 紫色 */
-    #ff4444 72deg 144deg,/* 1:一等奖 红色 */
-    #ff9800 144deg 216deg,/*2:二等奖 橙色 */
-    #4caf50 216deg 288deg,/*3:三等奖 绿色 */
-    #2196f3 288deg 360deg /*4:四等奖 蓝色 */
+    #2196f3 0deg 72deg,    /* 四等奖 蓝色 */
+    #9c27b0 72deg 144deg,  /* 谢谢参与 紫色 */
+    #ff4444 144deg 216deg, /* 一等奖 红色 */
+    #ff9800 216deg 288deg, /* 二等奖 橙色 */
+    #4caf50 288deg 360deg  /* 三等奖 绿色 */
   );
   transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);
 }
@@ -54,23 +54,26 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   z-index:2;
 }
 
-/* 文字固定在转盘上，角度和扇形完全对齐，正向显示 */
-.wheel .prize{
+/* 文字层：固定不动，正向显示 */
+.text-layer{
   position:absolute;
-  top:20px;
-  left:50%;
-  transform-origin:center 130px;
-  width:70px;
-  text-align:center;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
+}
+.prize-text{
+  position:absolute;
   font-weight:bold;
   font-size:14px;
   color:#222;
+  width:70px;
+  text-align:center;
 }
-.wheel .p0{transform:translateX(-50%) rotate(36deg);}   /* 谢谢参与 */
-.wheel .p1{transform:translateX(-50%) rotate(108deg);}  /* 一等奖 */
-.wheel .p2{transform:translateX(-50%) rotate(180deg);}  /* 二等奖 */
-.wheel .p3{transform:translateX(-50%) rotate(252deg);}  /* 三等奖 */
-.wheel .p4{transform:translateX(-50%) rotate(324deg);} /* 四等奖 */
+.t0{top:45px;left:50%;transform:translateX(-50%);} /* 四等奖 */
+.t1{top:100px;left:230px;}                         /* 谢谢参与 */
+.t2{top:210px;left:150px;transform:translateX(-50%);}/* 一等奖 */
+.t3{top:100px;left:70px;}                          /* 二等奖 */
+.t4{top:45px;left:100px;transform:translateX(-50%);} /* 三等奖 */
 
 .btn{margin-top:30px;padding:12px 35px;font-size:17px;background:#e53935;color:#fff;border:none;border-radius:50px;font-weight:bold;}
 .btn:disabled{background:#999;}
@@ -82,12 +85,14 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 
 <div class="wheel-box">
   <div class="arrow"></div>
-  <div class="wheel" id="wheel">
-    <div class="prize p0">谢谢参与</div>
-    <div class="prize p1">一等奖</div>
-    <div class="prize p2">二等奖</div>
-    <div class="prize p3">三等奖</div>
-    <div class="prize p4">四等奖</div>
+  <div class="wheel" id="wheel"></div>
+  <!-- 文字固定层，和转盘一一对应 -->
+  <div class="text-layer">
+    <div class="prize-text t0">四等奖</div>
+    <div class="prize-text t1">谢谢参与</div>
+    <div class="prize-text t2">一等奖</div>
+    <div class="prize-text t3">二等奖</div>
+    <div class="prize-text t4">三等奖</div>
   </div>
 </div>
 
@@ -95,15 +100,15 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 <div class="result" id="result"></div>
 
 <script>
-// 【锁死顺序】奖项和转盘扇形一一对应，箭头指的=这个数组的索引
-const prizes = ["谢谢参与","一等奖","二等奖","三等奖","四等奖"];
+// 【和转盘顺序完全锁死】箭头指向=这个数组的索引
+const prizes = ["四等奖","谢谢参与","一等奖","二等奖","三等奖"];
 const urlParams = new URLSearchParams(location.search);
 const urlCode = urlParams.get("code");
-const p0 = parseInt(urlParams.get("p0")) || 10; // 谢谢参与概率
-const p1 = parseInt(urlParams.get("p1")) || 10; // 一等奖概率
-const p2 = parseInt(urlParams.get("p2")) || 20; // 二等奖概率
-const p3 = parseInt(urlParams.get("p3")) || 30; // 三等奖概率
-const p4 = parseInt(urlParams.get("p4")) || 30; // 四等奖概率
+const p0 = parseInt(urlParams.get("p0")) || 30; // 四等奖概率
+const p1 = parseInt(urlParams.get("p1")) || 10; // 谢谢参与概率
+const p2 = parseInt(urlParams.get("p2")) || 10; // 一等奖概率
+const p3 = parseInt(urlParams.get("p3")) || 20; // 二等奖概率
+const p4 = parseInt(urlParams.get("p4")) || 30; // 三等奖概率
 const forcePrize = parseInt(urlParams.get("force"));
 const prizeProb = [p0,p1,p2,p3,p4];
 
@@ -130,8 +135,9 @@ drawBtn.onclick = function(){
 
   let idx = 0;
   if(!isNaN(forcePrize) && forcePrize >= 0){
-    // 强制奖项直接用索引，和转盘顺序一致
-    idx = forcePrize;
+    // 强制奖项映射：管理员设置的奖项→转盘顺序
+    const map = [2,3,4,0,1]; // 0一等奖→2,1二等奖→3,2三等奖→4,3四等奖→0,4谢谢参与→1
+    idx = map[forcePrize];
   }else{
     let r = Math.random()*100;
     let sum = 0;
@@ -144,7 +150,7 @@ drawBtn.onclick = function(){
     }
   }
 
-  // 角度计算：箭头直接停在扇形中心，和奖项100%对应
+  // 角度计算：箭头停在扇形中心，和奖项100%对应
   let rotateDeg = 2000 + Math.random()*800 + (idx * 72 + 36);
   wheel.style.transform = "rotate(" + rotateDeg + "deg)";
 
