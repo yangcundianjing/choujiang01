@@ -28,18 +28,18 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   z-index:10;
 }
 
-/* 一体转盘：颜色 + 文字 全部在里面，一起旋转 */
+/* 转盘颜色和奖项一一对应 */
 .wheel{
   position:relative;
   width:100%;
   height:100%;
   border-radius:50%;
   background:conic-gradient(
-    #ff4444 0deg 72deg,
-    #ff9800 72deg 144deg,
-    #4caf50 144deg 216deg,
-    #2196f3 216deg 288deg,
-    #9c27b0 288deg 360deg
+    #ff9800 0deg 72deg,    /* 0:二等奖 橙色 */
+    #4caf50 72deg 144deg,  /* 1:三等奖 绿色 */
+    #2196f3 144deg 216deg, /* 2:四等奖 蓝色 */
+    #9c27b0 216deg 288deg, /* 3:谢谢参与 紫色 */
+    #ff4444 288deg 360deg  /* 4:一等奖 红色 */
   );
   transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);
 }
@@ -57,7 +57,7 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   z-index:2;
 }
 
-/* 文字和转盘一体旋转，正向不反向 */
+/* 文字和转盘一体，正向不反向 */
 .wheel .item{
   position:absolute;
   top:20px;
@@ -69,11 +69,11 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   font-size:14px;
   color:#222;
 }
-.wheel .item1{transform:translateX(-50%) rotate(36deg);}
-.wheel .item2{transform:translateX(-50%) rotate(108deg);}
-.wheel .item3{transform:translateX(-50%) rotate(180deg);}
-.wheel .item4{transform:translateX(-50%) rotate(252deg);}
-.wheel .item5{transform:translateX(-50%) rotate(324deg);}
+.wheel .item0{transform:translateX(-50%) rotate(36deg);}  /* 二等奖 */
+.wheel .item1{transform:translateX(-50%) rotate(108deg);} /* 三等奖 */
+.wheel .item2{transform:translateX(-50%) rotate(180deg);} /* 四等奖 */
+.wheel .item3{transform:translateX(-50%) rotate(252deg);} /* 谢谢参与 */
+.wheel .item4{transform:translateX(-50%) rotate(324deg);} /* 一等奖 */
 
 .btn{margin-top:30px;padding:12px 35px;font-size:17px;background:#e53935;color:#fff;border:none;border-radius:50px;font-weight:bold;}
 .btn:disabled{background:#999;}
@@ -87,11 +87,11 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 <div class="wheel-box">
   <div class="arrow"></div>
   <div class="wheel" id="wheel">
-    <div class="item item1">一等奖</div>
-    <div class="item item2">二等奖</div>
-    <div class="item item3">三等奖</div>
-    <div class="item item4">四等奖</div>
-    <div class="item item5">谢谢参与</div>
+    <div class="item item0">二等奖</div>
+    <div class="item item1">三等奖</div>
+    <div class="item item2">四等奖</div>
+    <div class="item item3">谢谢参与</div>
+    <div class="item item4">一等奖</div>
   </div>
 </div>
 
@@ -99,14 +99,15 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 <div class="result" id="result"></div>
 
 <script>
-const prizes = ["一等奖","二等奖","三等奖","四等奖","谢谢参与"];
+// 奖项顺序：和转盘扇形一一对应
+const prizes = ["二等奖","三等奖","四等奖","谢谢参与","一等奖"];
 const urlParams = new URLSearchParams(location.search);
 const urlCode = urlParams.get("code");
-const p0 = parseInt(urlParams.get("p0")) || 10;
-const p1 = parseInt(urlParams.get("p1")) || 20;
-const p2 = parseInt(urlParams.get("p2")) || 30;
-const p3 = parseInt(urlParams.get("p3")) || 30;
-const p4 = parseInt(urlParams.get("p4")) || 10;
+const p0 = parseInt(urlParams.get("p0")) || 20; // 二等奖概率
+const p1 = parseInt(urlParams.get("p1")) || 30; // 三等奖概率
+const p2 = parseInt(urlParams.get("p2")) || 25; // 四等奖概率
+const p3 = parseInt(urlParams.get("p3")) || 15; // 谢谢参与概率
+const p4 = parseInt(urlParams.get("p4")) || 10; // 一等奖概率
 const forcePrize = parseInt(urlParams.get("force"));
 const prizeProb = [p0,p1,p2,p3,p4];
 
@@ -133,7 +134,9 @@ drawBtn.onclick = function(){
 
   let idx = 0;
   if(!isNaN(forcePrize) && forcePrize >= 0){
-    idx = forcePrize;
+    // 强制中奖映射：管理员设置的奖项→转盘顺序
+    const map = [4,0,1,2,3]; // 0一等奖→4,1二等奖→0,2三等奖→1,3四等奖→2,4谢谢参与→3
+    idx = map[forcePrize];
   }else{
     let r = Math.random()*100;
     let sum = 0;
@@ -146,9 +149,9 @@ drawBtn.onclick = function(){
     }
   }
 
-  // 精准角度：箭头 100% 指向中奖奖项
-  let rotate = 2160 - (idx * 72);
-  wheel.style.transform = `rotate(${rotate}deg)`;
+  // 核心修复：角度计算让箭头停在扇形中心，不再压线
+  let rotateDeg = 2000 + Math.random()*800 + (360 - (idx * 72 + 36));
+  wheel.style.transform = "rotate(" + rotateDeg + "deg)";
 
   setTimeout(()=>{
     localStorage.setItem(lockKey,"1");
