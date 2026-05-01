@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>抽奖链接管理员生成器</title>
+<style>
+body{max-width:500px;margin:50px auto;padding:20px;font-family:微软雅黑;}
+.box{padding:20px;border:1px solid #eee;border-radius:10px;}
+h3{color:#e53935;}
+input{width:100%;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:5px;}
+button{padding:10px 20px;background:#e53935;color:#fff;border:none;border-radius:5px;cursor:pointer;}
+.link{margin-top:15px;padding:10px;background:#f5f5f5;border-radius:5px;word-break:break-all;}
+</style>
+</head>
+<body>
+<div class="box">
+    <h3>🔧 消费满100元 生成专属抽奖链接</h3>
+    <input type="text" id="name" placeholder="输入客户备注/昵称（随便填）">
+    <button onclick="createLink()">生成专属微信抽奖链接</button>
+    <div class="link" id="linkBox" style="display:none;"></div>
+</div>
+
+<script>
+// 这里已经改成你仓库根目录的地址了
+const baseUrl = "https://yangcundianjing.github.io/choujiang01/lottery.html";
+
+function createLink(){
+    let name = document.getElementById("name").value.trim();
+    if(!name){alert("请输入客户备注");return;}
+    let code = Math.random().toString(36).slice(2) + Date.now();
+    let link = baseUrl + "?code=" + code;
+    
+    document.getElementById("linkBox").innerText = "专属链接：\n" + link;
+    document.getElementById("linkBox").style.display = "block";
+}
+</script>
+</body>
+</html>
