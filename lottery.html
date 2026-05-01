@@ -27,20 +27,23 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   border-top:36px solid #d32f2f;
   z-index:10;
 }
+
+/* 一体转盘：颜色 + 文字 全部在里面，一起旋转 */
 .wheel{
   position:relative;
   width:100%;
   height:100%;
   border-radius:50%;
   background:conic-gradient(
-    #4caf50 0deg 72deg,    /* 0:四等奖 绿色 */
-    #2196f3 72deg 144deg,  /* 1:谢谢参与 蓝色 */
-    #9c27b0 144deg 216deg, /* 2:一等奖 紫色 */
-    #ff4444 216deg 288deg, /* 3:二等奖 红色 */
-    #ff9800 288deg 360deg  /* 4:三等奖 橙色 */
+    #ff4444 0deg 72deg,
+    #ff9800 72deg 144deg,
+    #4caf50 144deg 216deg,
+    #2196f3 216deg 288deg,
+    #9c27b0 288deg 360deg
   );
   transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);
 }
+
 .wheel::before{
   content:"";
   position:absolute;
@@ -54,44 +57,41 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   z-index:2;
 }
 
-/* 文字固定层，和扇形一一对应，永远正向 */
-.text-layer{
+/* 文字和转盘一体旋转，正向不反向 */
+.wheel .item{
   position:absolute;
-  inset:0;
-  z-index:3;
-  pointer-events:none;
-}
-.prize-text{
-  position:absolute;
+  top:20px;
+  left:50%;
+  transform-origin:50% 130px;
+  width:70px;
+  text-align:center;
   font-weight:bold;
   font-size:14px;
   color:#222;
-  width:70px;
-  text-align:center;
 }
-.t0{top:45px;left:50%;transform:translateX(-50%);} /* 四等奖 */
-.t1{top:100px;left:230px;}                         /* 谢谢参与 */
-.t2{top:210px;left:150px;transform:translateX(-50%);}/* 一等奖 */
-.t3{top:100px;left:70px;}                          /* 二等奖 */
-.t4{top:45px;left:100px;transform:translateX(-50%);} /* 三等奖 */
+.wheel .item1{transform:translateX(-50%) rotate(36deg);}
+.wheel .item2{transform:translateX(-50%) rotate(108deg);}
+.wheel .item3{transform:translateX(-50%) rotate(180deg);}
+.wheel .item4{transform:translateX(-50%) rotate(252deg);}
+.wheel .item5{transform:translateX(-50%) rotate(324deg);}
 
 .btn{margin-top:30px;padding:12px 35px;font-size:17px;background:#e53935;color:#fff;border:none;border-radius:50px;font-weight:bold;}
 .btn:disabled{background:#999;}
 .result{margin-top:15px;font-size:17px;font-weight:bold;color:#333;}
 </style>
 </head>
+
 <body>
 <div class="title">🎁 幸运大转盘</div>
 
 <div class="wheel-box">
   <div class="arrow"></div>
-  <div class="wheel" id="wheel"></div>
-  <div class="text-layer">
-    <div class="prize-text t0">四等奖</div>
-    <div class="prize-text t1">谢谢参与</div>
-    <div class="prize-text t2">一等奖</div>
-    <div class="prize-text t3">二等奖</div>
-    <div class="prize-text t4">三等奖</div>
+  <div class="wheel" id="wheel">
+    <div class="item item1">一等奖</div>
+    <div class="item item2">二等奖</div>
+    <div class="item item3">三等奖</div>
+    <div class="item item4">四等奖</div>
+    <div class="item item5">谢谢参与</div>
   </div>
 </div>
 
@@ -99,15 +99,14 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 <div class="result" id="result"></div>
 
 <script>
-// 【锁死顺序】箭头指向的扇形，对应数组的索引，结果永远和箭头一致
-const prizes = ["四等奖","谢谢参与","一等奖","二等奖","三等奖"];
+const prizes = ["一等奖","二等奖","三等奖","四等奖","谢谢参与"];
 const urlParams = new URLSearchParams(location.search);
 const urlCode = urlParams.get("code");
-const p0 = parseInt(urlParams.get("p0")) || 30; // 四等奖概率
-const p1 = parseInt(urlParams.get("p1")) || 10; // 谢谢参与概率
-const p2 = parseInt(urlParams.get("p2")) || 10; // 一等奖概率
-const p3 = parseInt(urlParams.get("p3")) || 20; // 二等奖概率
-const p4 = parseInt(urlParams.get("p4")) || 30; // 三等奖概率
+const p0 = parseInt(urlParams.get("p0")) || 10;
+const p1 = parseInt(urlParams.get("p1")) || 20;
+const p2 = parseInt(urlParams.get("p2")) || 30;
+const p3 = parseInt(urlParams.get("p3")) || 30;
+const p4 = parseInt(urlParams.get("p4")) || 10;
 const forcePrize = parseInt(urlParams.get("force"));
 const prizeProb = [p0,p1,p2,p3,p4];
 
@@ -134,9 +133,7 @@ drawBtn.onclick = function(){
 
   let idx = 0;
   if(!isNaN(forcePrize) && forcePrize >= 0){
-    // 强制奖项映射：管理员设置的奖项→转盘顺序
-    const map = [2,3,4,0,1]; // 0一等奖→2,1二等奖→3,2三等奖→4,3四等奖→0,4谢谢参与→1
-    idx = map[forcePrize];
+    idx = forcePrize;
   }else{
     let r = Math.random()*100;
     let sum = 0;
@@ -149,9 +146,9 @@ drawBtn.onclick = function(){
     }
   }
 
-  // 角度计算：箭头直接停在扇形中心，100%对应奖项
-  let rotateDeg = 2000 + Math.random()*800 + (idx * 72 + 36);
-  wheel.style.transform = "rotate(" + rotateDeg + "deg)";
+  // 精准角度：箭头 100% 指向中奖奖项
+  let rotate = 2160 - (idx * 72);
+  wheel.style.transform = `rotate(${rotate}deg)`;
 
   setTimeout(()=>{
     localStorage.setItem(lockKey,"1");
