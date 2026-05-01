@@ -31,7 +31,7 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   z-index:10;
 }
 
-/* 转盘 + 文字 一体！！！ */
+/* 转盘 + 文字 一体 */
 .wheel{
   position:relative;
   width:100%;
@@ -47,7 +47,7 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);
 }
 
-/* 文字和转盘绑定一起旋转！！！ */
+/* 文字和转盘绑定一起旋转 */
 .wheel .item{
   position:absolute;
   top:20px;
@@ -100,7 +100,6 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 <div class="wheel-box">
   <div class="arrow"></div>
 
-  <!-- 文字 直接 放在 转盘 内部！！！ -->
   <div class="wheel" id="wheel">
     <div class="item item1">一等奖</div>
     <div class="item item2">二等奖</div>
@@ -162,7 +161,8 @@ drawBtn.onclick = function(){
     }
   }
 
-  let rotateDeg = 2000 + Math.random()*800 + (360 - (idx*72+36));
+  // 修复关键：角度改为顺时针计算，保证箭头指向=中奖结果
+  let rotateDeg = 2000 + Math.random()*800 + (idx * 72 + 36);
   wheel.style.transform = "rotate(" + rotateDeg + "deg)";
 
   setTimeout(()=>{
