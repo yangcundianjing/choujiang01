@@ -33,11 +33,11 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   height:100%;
   border-radius:50%;
   background:conic-gradient(
-    #4caf50 0deg 72deg,    /* 三等奖 绿色 */
-    #2196f3 72deg 144deg,  /* 四等奖 蓝色 */
-    #9c27b0 144deg 216deg,/* 谢谢参与 紫色 */
-    #ff4444 216deg 288deg,/* 一等奖 红色 */
-    #ff9800 288deg 360deg /* 二等奖 橙色 */
+    #ff4444 0deg 72deg,    /* 一等奖 红色 */
+    #ff9800 72deg 144deg,  /* 二等奖 橙色 */
+    #4caf50 144deg 216deg, /* 三等奖 绿色 */
+    #2196f3 216deg 288deg, /* 四等奖 蓝色 */
+    #9c27b0 288deg 360deg  /* 谢谢参与 紫色 */
   );
   transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);
 }
@@ -54,26 +54,23 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   z-index:2;
 }
 
-/* 文字层：固定不动，不随转盘旋转 */
-.text-layer{
+/* 文字直接放在转盘里，和转盘一起旋转 */
+.wheel .prize{
   position:absolute;
-  inset:0;
-  z-index:3;
-  pointer-events:none;
-}
-.prize-text{
-  position:absolute;
+  top:20px;
+  left:50%;
+  transform-origin:center 130px;
+  width:70px;
+  text-align:center;
   font-weight:bold;
   font-size:14px;
   color:#222;
-  width:70px;
-  text-align:center;
 }
-.t1{top:45px;left:50%;transform:translateX(-50%);} /* 三等奖 */
-.t2{top:100px;left:230px;}                         /* 四等奖 */
-.t3{top:210px;left:150px;transform:translateX(-50%);}/* 谢谢参与 */
-.t4{top:100px;left:70px;}                          /* 一等奖 */
-.t5{top:45px;left:100px;transform:translateX(-50%);} /* 二等奖 */
+.wheel .p1{transform:translateX(-50%) rotate(36deg);}
+.wheel .p2{transform:translateX(-50%) rotate(108deg);}
+.wheel .p3{transform:translateX(-50%) rotate(180deg);}
+.wheel .p4{transform:translateX(-50%) rotate(252deg);}
+.wheel .p5{transform:translateX(-50%) rotate(324deg);}
 
 .btn{margin-top:30px;padding:12px 35px;font-size:17px;background:#e53935;color:#fff;border:none;border-radius:50px;font-weight:bold;}
 .btn:disabled{background:#999;}
@@ -85,14 +82,12 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 
 <div class="wheel-box">
   <div class="arrow"></div>
-  <div class="wheel" id="wheel"></div>
-  <!-- 文字层：固定不动 -->
-  <div class="text-layer">
-    <div class="prize-text t1">三等奖</div>
-    <div class="prize-text t2">四等奖</div>
-    <div class="prize-text t3">谢谢参与</div>
-    <div class="prize-text t4">一等奖</div>
-    <div class="prize-text t5">二等奖</div>
+  <div class="wheel" id="wheel">
+    <div class="prize p1">一等奖</div>
+    <div class="prize p2">二等奖</div>
+    <div class="prize p3">三等奖</div>
+    <div class="prize p4">四等奖</div>
+    <div class="prize p5">谢谢参与</div>
   </div>
 </div>
 
@@ -100,8 +95,7 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 <div class="result" id="result"></div>
 
 <script>
-// 奖项顺序：和转盘颜色一一对应，箭头指向的顺序
-const prizes = ["三等奖","四等奖","谢谢参与","一等奖","二等奖"];
+const prizes = ["一等奖","二等奖","三等奖","四等奖","谢谢参与"];
 const urlParams = new URLSearchParams(location.search);
 const urlCode = urlParams.get("code");
 const p0 = parseInt(urlParams.get("p0")) || 10;
@@ -135,23 +129,20 @@ drawBtn.onclick = function(){
 
   let idx = 0;
   if(!isNaN(forcePrize) && forcePrize >= 0){
-    // 把强制奖项映射到转盘的顺序
-    const map = [3,4,0,1,2]; // 0一等奖→3,1二等奖→4,2三等奖→0,3四等奖→1,4谢谢参与→2
-    idx = map[forcePrize];
+    idx = forcePrize;
   }else{
     let r = Math.random()*100;
     let sum = 0;
     for(let i=0;i<5;i++){
       sum += prizeProb[i];
       if(r < sum){
-        const map = [3,4,0,1,2];
-        idx = map[i];
+        idx = i;
         break;
       }
     }
   }
 
-  // 转盘旋转角度：箭头指向对应奖项
+  // 角度和奖项一一对应，保证箭头指向=中奖结果
   let rotateDeg = 2000 + Math.random()*800 + (360 - (idx*72+36));
   wheel.style.transform = "rotate(" + rotateDeg + "deg)";
 
