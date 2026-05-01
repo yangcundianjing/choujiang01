@@ -9,44 +9,113 @@
 body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;padding:20px 15px;}
 .title{font-size:22px;color:#e53935;font-weight:bold;margin-bottom:20px;}
 
-.wheel-box{position:relative;width:300px;height:300px;}
-.arrow{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-top:36px solid #d32f2f;z-index:3;}
-.wheel{width:100%;height:100%;border-radius:50%;background:conic-gradient(#ff4444 0deg 72deg,#ff9800 72deg 144deg,#4caf50 144deg 216deg,#2196f3 216deg 288deg,#9c27b0 288deg 360deg);transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);position:relative;z-index:1;}
-.wheel::before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28%;height:28%;background:#fff;border-radius:50%;z-index:2;}
+/* 转盘容器 */
+.wheel-box{
+  position:relative;
+  width:300px;
+  height:300px;
+  margin:0 auto;
+}
 
-.text-layer{position:absolute;inset:0;z-index:2;pointer-events:none;}
-.prize-text{position:absolute;font-weight:bold;font-size:13px;color:#222;width:70px;text-align:center;transform:translate(-50%,-50%);}
-.t1{top:45px;left:50%;}
-.t2{top:95px;left:240px;transform:translate(-50%,-50%) rotate(72deg);}
-.t3{top:165px;left:50%;}
-.t4{top:95px;left:60px;transform:translate(-50%,-50%) rotate(-72deg);}
-.t5{top:45px;left:100px;transform:translate(-50%,-50%) rotate(-144deg);}
+/* 指针 */
+.arrow{
+  position:absolute;
+  top:-10px;
+  left:50%;
+  transform:translateX(-50%);
+  width:0;
+  height:0;
+  border-left:18px solid transparent;
+  border-right:18px solid transparent;
+  border-top:36px solid #d32f2f;
+  z-index:10;
+}
 
-.btn{margin-top:30px;padding:12px 35px;font-size:17px;background:#e53935;color:#fff;border:none;border-radius:50px;font-weight:bold;}
+/* 转盘 + 文字 一体！！！ */
+.wheel{
+  position:relative;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:conic-gradient(
+    #ff4444 0deg 72deg,
+    #ff9800 72deg 144deg,
+    #4caf50 144deg 216deg,
+    #2196f3 216deg 288deg,
+    #9c27b0 288deg 360deg
+  );
+  transition:transform 6s cubic-bezier(0.1,0.7,0.1,1);
+}
+
+/* 文字和转盘绑定一起旋转！！！ */
+.wheel .item{
+  position:absolute;
+  top:20px;
+  left:50%;
+  transform-origin:50% 130px;
+  width:70px;
+  text-align:center;
+  font-weight:bold;
+  font-size:14px;
+  color:#222;
+}
+.wheel .item1{transform:translateX(-50%) rotate(36deg);}
+.wheel .item2{transform:translateX(-50%) rotate(108deg);}
+.wheel .item3{transform:translateX(-50%) rotate(180deg);}
+.wheel .item4{transform:translateX(-50%) rotate(252deg);}
+.wheel .item5{transform:translateX(-50%) rotate(324deg);}
+
+/* 中间白色圆心 */
+.wheel::before{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:80px;
+  height:80px;
+  background:#fff;
+  border-radius:50%;
+  z-index:2;
+}
+
+.btn{
+  margin-top:30px;
+  padding:12px 35px;
+  font-size:17px;
+  background:#e53935;
+  color:#fff;
+  border:none;
+  border-radius:50px;
+  font-weight:bold;
+}
 .btn:disabled{background:#999;}
 .result{margin-top:15px;font-size:17px;font-weight:bold;color:#333;}
 </style>
 </head>
+
 <body>
 <div class="title">🎁 幸运大转盘</div>
+
 <div class="wheel-box">
-    <div class="arrow"></div>
-    <div class="wheel" id="wheel"></div>
-    <div class="text-layer">
-        <div class="prize-text t1">一等奖</div>
-        <div class="prize-text t2">二等奖</div>
-        <div class="prize-text t3">三等奖</div>
-        <div class="prize-text t4">四等奖</div>
-        <div class="prize-text t5">谢谢参与</div>
-    </div>
+  <div class="arrow"></div>
+
+  <!-- 文字 直接 放在 转盘 内部！！！ -->
+  <div class="wheel" id="wheel">
+    <div class="item item1">一等奖</div>
+    <div class="item item2">二等奖</div>
+    <div class="item item3">三等奖</div>
+    <div class="item item4">四等奖</div>
+    <div class="item item5">谢谢参与</div>
+  </div>
+
 </div>
+
 <button id="drawBtn" class="btn">开始抽奖</button>
 <div class="result" id="result"></div>
 
 <script>
 const prizes = ["一等奖","二等奖","三等奖","四等奖","谢谢参与"];
-
-// 读取链接参数
 const urlParams = new URLSearchParams(location.search);
 const urlCode = urlParams.get("code");
 const p0 = parseInt(urlParams.get("p0")) || 10;
@@ -55,51 +124,53 @@ const p2 = parseInt(urlParams.get("p2")) || 30;
 const p3 = parseInt(urlParams.get("p3")) || 30;
 const p4 = parseInt(urlParams.get("p4")) || 10;
 const forcePrize = parseInt(urlParams.get("force"));
+const prizeProb = [p0,p1,p2,p3,p4];
 
-const prizeProb = [p0, p1, p2, p3, p4];
-let drawBtn = document.getElementById("drawBtn");
-let result = document.getElementById("result");
-let wheel = document.getElementById("wheel");
+const drawBtn = document.getElementById("drawBtn");
+const result = document.getElementById("result");
+const wheel = document.getElementById("wheel");
 
 if(!urlCode){
-    drawBtn.disabled = true;
-    drawBtn.innerText = "链接无效";
+  drawBtn.disabled=true;
+  drawBtn.innerText="链接无效";
 }
-
-let lockKey = "lottery_lock_" + urlCode;
+const lockKey = "lottery_lock_" + urlCode;
 if(localStorage.getItem(lockKey)){
-    drawBtn.disabled = true;
-    drawBtn.innerText = "已抽过奖，链接作废";
+  drawBtn.disabled=true;
+  drawBtn.innerText="已抽过奖，链接作废";
 }
 
 let spinning = false;
 drawBtn.onclick = function(){
-    if(spinning || !urlCode || localStorage.getItem(lockKey))return;
-    spinning = true;
-    drawBtn.disabled = true;
-    drawBtn.innerText = "抽奖中...";
+  if(spinning || !urlCode || localStorage.getItem(lockKey)) return;
+  spinning = true;
+  drawBtn.disabled = true;
+  drawBtn.innerText = "抽奖中...";
 
-    let idx = 4;
-    if(!isNaN(forcePrize) && forcePrize >= 0){
-        idx = forcePrize; // 强制奖项优先
-    }else{
-        let ran = Math.random()*100;
-        let sum = 0;
-        for(let i=0;i<prizeProb.length;i++){
-            sum += prizeProb[i];
-            if(ran < sum){idx=i;break;}
-        }
+  let idx = 4;
+  if(!isNaN(forcePrize) && forcePrize >= 0){
+    idx = forcePrize;
+  }else{
+    let r = Math.random()*100;
+    let sum = 0;
+    for(let i=0;i<5;i++){
+      sum += prizeProb[i];
+      if(r < sum){
+        idx = i;
+        break;
+      }
     }
+  }
 
-    let deg = 2000 + Math.random()*800 + (360 - (idx*72+36));
-    wheel.style.transform = "rotate("+deg+"deg)";
+  let rotateDeg = 2000 + Math.random()*800 + (360 - (idx*72+36));
+  wheel.style.transform = "rotate(" + rotateDeg + "deg)";
 
-    setTimeout(()=>{
-        spinning = false;
-        localStorage.setItem(lockKey,"1");
-        result.innerText = "🎉 恭喜抽到：" + prizes[idx];
-        drawBtn.innerText = "链接已作废";
-    },6000);
+  setTimeout(()=>{
+    localStorage.setItem(lockKey,"1");
+    result.innerText = "🎉 恭喜抽到：" + prizes[idx];
+    drawBtn.innerText = "链接已作废";
+    spinning = false;
+  },6000);
 };
 </script>
 </body>
