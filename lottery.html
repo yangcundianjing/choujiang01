@@ -54,7 +54,7 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
   z-index:2;
 }
 
-/* 文字层：固定不动，永远正向显示 */
+/* 文字固定层，和转盘扇形一一对应，永远正向 */
 .text-layer{
   position:absolute;
   inset:0;
@@ -86,7 +86,6 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 <div class="wheel-box">
   <div class="arrow"></div>
   <div class="wheel" id="wheel"></div>
-  <!-- 文字固定层，和转盘扇形一一对应 -->
   <div class="text-layer">
     <div class="prize-text t0">四等奖</div>
     <div class="prize-text t1">谢谢参与</div>
@@ -100,7 +99,7 @@ body{background:#fff5f5;display:flex;flex-direction:column;align-items:center;pa
 <div class="result" id="result"></div>
 
 <script>
-// 【锁死顺序】箭头指向的扇形，对应数组的索引，结果永远和箭头一致
+// 【锁死顺序】箭头指向的扇形 = 数组索引，结果永远和箭头一致
 const prizes = ["四等奖","谢谢参与","一等奖","二等奖","三等奖"];
 const urlParams = new URLSearchParams(location.search);
 const urlCode = urlParams.get("code");
